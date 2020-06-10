@@ -6,8 +6,8 @@ Vagrant.configure("2") do |config|
     config.vm.provider "virtualbox"
 
     # Application server
-    config.vm.define "noodfonds", primary: true do |node|
-        node.vm.hostname = "noodfonds"
+    config.vm.define "websrv", primary: true do |node|
+        node.vm.hostname = "websrv"
 
         node.vm.network "private_network", ip: "10.10.10.70"
 
@@ -21,7 +21,7 @@ Vagrant.configure("2") do |config|
         node.vm.synced_folder "ansible", "/vagrant"
 
         # Application folder
-        node.vm.synced_folder ".", "/var/www/vhosts/noodfonds", type: "nfs"
+        node.vm.synced_folder ".", "/var/www/vhosts/websrv", type: "nfs"
 
         # Run Ansible from the Vagrant VM
         node.vm.provision "ansible_local" do |ansible|
