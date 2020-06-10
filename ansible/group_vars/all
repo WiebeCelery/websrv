@@ -1,0 +1,21 @@
+---
+# Variables listed here are applicable to all host groups
+
+httpd_port: 80
+ntpserver: time.google.com
+project: websrv
+
+# DB
+mysqlservice: mysqld
+mysql_port: 3306
+dbuser: websrv
+dbhost: localhost
+dbname: websrv
+upassword: xjuscNxjwnUz^bC#
+mysql_root_username: root
+mysql_root_password: xjuscNxjwnUz^bC#
+
+hostname: websrv.celery.loc
+documentroot: /var/www/vhosts/{{project}}/live
+
+httpd_config : /etc/httpd/conf/httpd.conf

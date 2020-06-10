@@ -1,0 +1,6 @@
+.DS_Store
+.idea
+.vagrant
+vendor
+/src/wp
+/src/content/uploads/cache

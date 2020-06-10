@@ -1,0 +1,37 @@
+---
+
+# sources about install wordpress with composer.
+#
+# https://roots.io/docs/bedrock/master/installation/
+#
+
+- name: Composer install
+  composer:
+    command: install
+    working_dir: /var/www/vhosts/{{project}}/src
+    no_dev: no
+
+- name: Create {{project}} configuration file
+  template: src=vhost.conf.j2 dest=/etc/httpd/conf.d/{{project}}.conf
+
+- name: Download wordpress cli
+  get_url:
+    url: https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+    dest: /usr/local/bin/wp
+    mode: 0755
+
+- name: Check for .env file
+  stat: path=/var/www/vhosts/{{project}}/src/.env
+  register: myenvfile
+
+- name: Create .env file
+  copy:
+    src: /var/www/vhosts/{{project}}/src/.env.vagrant
+    dest: /var/www/vhosts/{{project}}/src/.env
+    mode: '0644'
+  when: not myenvfile.stat.exists
+
+- name: import database
+  shell: "mysql -u {{ mysql_root_username }} --password={{ mysql_root_password }} -h 127.0.0.1 {{dbname}} < dbdump.sql"
+  args:
+    chdir: /var/www/vhosts/{{project}}/ansible/roles/wordpress/files

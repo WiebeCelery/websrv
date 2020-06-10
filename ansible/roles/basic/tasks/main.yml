@@ -1,0 +1,47 @@
+---
+- debug:
+    msg: "Performing Yum update of server {{ ansible_hostname }}"
+
+- name: "Basic packets"
+  yum:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - vim
+    - nano
+    - policycoreutils-python
+    - bind-utils
+    - yum-utils
+    - wget
+    - unzip
+    - open-vm-tools
+    - yum-cron
+    - deltarpm
+
+- name: upgrade all packages
+  yum:
+    name: '*'
+    state: latest
+
+# NTP
+- name: Install ntp
+  yum: name=ntp state=present
+  tags: ntp
+
+- name: Configure ntp file
+  template: src=ntp.conf.j2 dest=/etc/ntp.conf
+  tags: ntp
+  notify: restart ntp
+
+- name: Start the ntp service
+  service: name=ntpd state=started enabled=yes
+  tags: ntp
+
+- name: Enable and Start Firewalld
+  service: name=firewalld state=started enabled=yes
+  tags: firewall
+
+# Put SELinux in Permissive mode.
+- selinux:
+    policy: targeted
+    state: permissive

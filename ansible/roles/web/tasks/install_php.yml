@@ -1,0 +1,49 @@
+---
+# These tasks install php 7.3
+
+- name: epel-release
+  yum: name=epel-release state=installed
+
+- name: Install remi repo.
+  yum:
+    name: "{{ remi_repo_url }}"
+    state: present
+
+- name: Import remi GPG key.
+  rpm_key:
+    key: "{{ remi_repo_gpg_key_url }}"
+    state: present
+
+- name: Add remi-php73
+  yum_repository:
+    name: remi-php73
+    description: Remi's PHP 7.3 RPM repository for Enterprise Linux $releasever - $basearch
+    mirrorlist: http://rpms.remirepo.net/enterprise/$releasever/php73/mirror
+    enabled: yes
+    gpgcheck: 1
+    gpgkey: http://rpms.remirepo.net/RPM-GPG-KEY-remi
+
+- name: install php73
+  yum: name={{ packages }} enablerepo=epel,remi,remi-php73 state=installed
+  vars:
+    packages:
+    - php
+    - php-mcrypt
+    - php-mbstring
+    - php-fpm
+    - php-gd
+    - php-xml
+    - php-pdo
+    - php-zip
+    - php-cli
+    - php-mysqlnd
+    - php-devel
+    - php-curl
+    - php-pear
+    - php-bcmath
+    - php-json
+    - php-mysql
+    - php-pecl-xdebug
+
+- name: Create xdebug.ini
+  template: src=15-xdebug.ini.j2 dest=/etc/php.d/15-xdebug.ini

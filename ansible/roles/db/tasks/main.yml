@@ -1,0 +1,97 @@
+---
+# This playbook will install MySQL and create db user and give permissions.
+
+- name: install MySQL repo
+  yum:
+    name: https://dev.mysql.com/get/mysql57-community-release-el7-9.noarch.rpm
+    state: present
+
+- name: Install MySQL package
+  yum:
+    name: [mysql-community-server,MySQL-python]
+    state: installed
+
+- name: Configure SELinux to start mysql on any port
+  seboolean: name=mysql_connect_any state=true persistent=yes
+
+- name: Create server.cnf configuration file
+  template: src=my.cnf.j2 dest=/etc/my.cnf
+
+- name: Start firewalld
+  service: name=firewalld state=started enabled=yes
+
+- name: insert firewalld rule {{ mysql_port }}
+  firewalld: port={{ mysql_port }}/tcp permanent=true state=enabled immediate=yes
+
+- name: mkdir mysql
+  file: path=/media/nf/db state=directory owner=mysql group=mysql
+
+- name: create /var/log/mysqld
+  file: path=/var/log/mysqld state=directory owner=mysql group=mysql
+
+- name: check if noodfonds database exists
+  stat: path=/media/nf/db/noodfonds
+  register: dbNF
+
+- name: Create noodfonds Database
+  command: /usr/sbin/mysqld  \
+    --initialize-insecure  \
+    --user=mysql  \
+    --datadir=/media/nf/db/noodfonds
+  when: not dbNF.stat.exists
+
+- name: Allow mysql to access /media/nf/db
+  sefcontext:
+    target: '/media/nf/db(/.*)?'
+    setype: mysqld_db_t
+    state: present
+
+- name: Apply new SELinux file context to filesystem
+  command: restorecon -irv /media/nf/db/*
+
+- name: enable the systemd service for database
+  command: systemctl enable mysqld
+
+- name: Start MySQL Service for the database
+  service: name=mysqld state=started enabled=yes
+
+############################################################
+## noodfonds DB
+
+- name: check checkfile
+  stat: path=/tmp/ansible-checkdb1
+  register: checkdb1
+
+- name: Wait for port {{ mysql_port }} to become open on the host
+  wait_for:
+    port: "{{ mysql_port }}"
+    delay: 2
+
+- name: Sets the root password
+  command: mysql -h 127.0.0.1 -P {{ mysql_port }} -u {{ mysql_root_username }} -e "ALTER USER {{ mysql_root_username }}@localhost IDENTIFIED WITH mysql_native_password BY '{{ mysql_root_password }}';"
+  when: not checkdb1.stat.exists
+
+- name: create checkfile
+  copy:
+    content: ""
+    dest: /tmp/ansible-checkdb1
+    force: no
+    group: root
+    owner: root
+    mode: '0444'
+
+#secure-installation
+- name: Disallow root login remotely
+  command: 'mysql -h 127.0.0.1 -P "{{ mysql_port }}" -u "{{ mysql_root_username }}" --password="{{ mysql_root_password }}" -NBe "{{ item }}"'
+  with_items:
+    - DELETE FROM mysql.user WHERE User='{{ mysql_root_username }}' AND Host NOT IN ('localhost', '127.0.0.1', '::1')
+  changed_when: false
+
+- name: Create Application Database
+  command: mysql -h 127.0.0.1 -P {{ mysql_port }} -u {{ mysql_root_username }} --password={{ mysql_root_password }} -e "CREATE DATABASE {{ dbname }} CHARACTER SET utf8 COLLATE utf8_general_ci;"
+
+- name: Create Application DB User
+  command: mysql -h 127.0.0.1 -P {{ mysql_port }} -u {{ mysql_root_username }} --password={{ mysql_root_password }} -e "CREATE USER {{ dbuser }}@'{{ dbhost }}' IDENTIFIED WITH mysql_native_password BY '{{ upassword }}';"
+
+- name: Grant privileges to DB User
+  command: mysql -h 127.0.0.1 -P {{ mysql_port }} -u {{ mysql_root_username }} --password={{ mysql_root_password }} -e "GRANT ALTER, CREATE, DELETE, DROP, INDEX, INSERT, REFERENCES, SELECT, UPDATE ON {{ dbname }}.* TO {{ dbuser }}@'{{ dbhost }}';"

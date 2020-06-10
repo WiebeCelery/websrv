@@ -1,0 +1,13 @@
+<VirtualHost *:80>
+    DocumentRoot {{documentroot}}
+    ServerAdmin wiebe@celerypayroll.com
+    ServerName {{hostname}}
+    <Directory "{{documentroot}}">
+        AllowOverride All
+        Require all granted
+    </Directory>
+    ServerSignature email
+
+    TransferLog logs/{{hostname}}_access_log
+    ErrorLog    logs/{{hostname}}_error_log
+</VirtualHost>

@@ -1,0 +1,23 @@
+---
+
+- name: Download phing-latest.phar
+  get_url:
+    url: http://www.phing.info/get/phing-latest.phar
+    dest: /usr/bin/phing.phar
+    mode: '0440'
+    checksum: sha512:https://www.phing.info/get/phing-latest.phar.sha512
+
+- name: Set permissions for /usr/bin/phing.phar
+  file:
+    path: /usr/bin/phing.phar
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: create symlink for /usr/bin/phing.phar
+  file:
+    src: /usr/bin/phing.phar
+    dest: /usr/bin/phing
+    owner: root
+    group: root
+    state: link

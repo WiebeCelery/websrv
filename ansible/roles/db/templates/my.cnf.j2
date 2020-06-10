@@ -1,0 +1,13 @@
+[mysqld]
+socket                        = /var/lib/mysql/noodfonds.sock
+port                          = {{mysql_port}}
+pid-file                      = /var/lib/mysql/noodfonds.pid
+datadir                       = /media/nf/db/noodfonds
+sql_mode                      = STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION
+innodb_buffer_pool_size       = 256M
+log-error                     = /var/log/mysqld/noodfonds.log
+slow_query_log_file           = /var/log/mysqld/noodfonds-slow.log
+slow_query_log                = 1
+log_queries_not_using_indexes = 0
+long_query_time               = 1
+default-authentication-plugin = mysql_native_password
